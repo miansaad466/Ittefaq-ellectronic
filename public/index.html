@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ittefaq Electronics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css"></head><body>
+<header class="top"><a class="logo" href="/"><b>Ittefaq</b>Electronics</a><nav><a href="#products">Products</a><a href="/admin">Admin</a></nav></header>
+<section class="hero"><h1>TVs, ACs, phones and more, at honest prices.</h1><p>Ittefaq Electronics stocks trusted brands with full warranty. Browse the shelf below or ask our assistant for a recommendation within your budget.</p></section>
+<div class="bar" id="products"><input id="q" placeholder="Search products" aria-label="Search products"><select id="cat" aria-label="Category"><option value="">All categories</option></select></div>
+<main class="grid" id="grid"></main>
+<footer>© Ittefaq Electronics. Prices in Pakistani Rupees (PKR).</footer>
+<button id="chatBtn">💬 Ask us</button>
+<section id="chat" aria-label="Chat assistant"><h4>Ittefaq Assistant</h4><div id="msgs"></div>
+<form id="cf"><input id="ci" placeholder="e.g. AC under 150000" autocomplete="off" aria-label="Your message"><button>Send</button></form></section>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function load(){const r=await fetch('/api/products?'+new URLSearchParams({q:$('#q').value,category:$('#cat').value}));const ps=await r.json();
+$('#grid').innerHTML=ps.length?ps.map(p=>`<article class="card"><div class="pic">${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:esc(p.emoji)}</div><div class="body"><span class="cat">${esc(p.category)}</span><h3>${esc(p.name)}</h3><p class="desc">${esc(p.description)}</p><span class="price">Rs ${p.price.toLocaleString()}</span><span class="stock ${p.stock?'':'out'}">${p.stock?p.stock+' in stock':'Out of stock'}</span></div></article>`).join(''):'<p>No products match your search. Try a different word or category.</p>'}
+async function cats(){const c=await (await fetch('/api/categories')).json();c.forEach(x=>$('#cat').insertAdjacentHTML('beforeend',`<option>${esc(x)}</option>`))}
+$('#q').oninput=load;$('#cat').onchange=load;cats();load();
+const hist=[];function add(t,w){const d=document.createElement('div');d.className='m '+w;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9}
+$('#chatBtn').onclick=()=>{$('#chat').classList.toggle('open');if(!$('#msgs').children.length)add("Assalam o Alaikum! Ask me about any product, price or budget.",'bot');$('#ci').focus()};
+$('#cf').onsubmit=async e=>{e.preventDefault();const t=$('#ci').value.trim();if(!t)return;$('#ci').value='';add(t,'me');
+const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:t,history:hist})});const {reply}=await r.json();
+hist.push({role:'user',content:t},{role:'assistant',content:reply});add(reply,'bot')};
+</script></body></html>
